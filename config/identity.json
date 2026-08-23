@@ -20,6 +20,6 @@
   "cliCommand": "dcursor",
   "agentDataDir": "dcursor-agent",
   "agentBinary": "dcursor-agent",
-  "versionSuffix": "dcursor1",
+  "versionSuffix": "dcursor2",
   "description": "The AI Code Editor (dCursor mirror instance)."
 }

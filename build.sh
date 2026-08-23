@@ -126,6 +126,7 @@ install_launcher_and_bins() {
 	echo "==> Installing launcher and bin scripts"
 	mkdir -p "${STAGING_DIR}/usr/share/dcursor/bin"
 	install -m 755 "${ROOT_DIR}/scripts/dcursor-launcher.sh" "${STAGING_DIR}/usr/share/dcursor/bin/dcursor"
+	install -m 755 "${ROOT_DIR}/scripts/dcursor-gui.sh" "${STAGING_DIR}/usr/share/dcursor/bin/dcursor-gui"
 
 	rm -f "${STAGING_DIR}/usr/share/dcursor/bin/cursor"
 

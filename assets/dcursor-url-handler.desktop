@@ -2,7 +2,7 @@
 Name=dCursor - URL Handler
 Comment=The AI Code Editor (dCursor mirror instance).
 GenericName=Text Editor
-Exec=/usr/share/dcursor/dcursor --open-url %U
+Exec=/usr/share/dcursor/bin/dcursor-gui --open-url %U
 Icon=co.anysphere.dcursor
 Type=Application
 NoDisplay=true

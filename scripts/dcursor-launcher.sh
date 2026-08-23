@@ -60,9 +60,14 @@ use_dcursor_cli() {
 }
 
 launch_dcursor_gui() {
-	# Launch Electron directly (same as cursor.desktop). Routing GUI through
-	# cli.js leaves stdout closed when started from the desktop shell → EPIPE.
-	exec "$ELECTRON" "$@"
+	# Desktop launchers close stdout/stderr; redirect when not a terminal to avoid EPIPE.
+	if [ -t 1 ]; then
+		exec "$ELECTRON" "$@"
+	fi
+
+	LOG="${XDG_CACHE_HOME:-$HOME/.cache}/dcursor-launch.log"
+	mkdir -p "$(dirname "$LOG")"
+	exec "$ELECTRON" "$@" </dev/null >>"$LOG" 2>&1
 }
 
 needs_cli_bridge() {
