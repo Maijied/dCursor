@@ -20,6 +20,22 @@ if [ "$1" = "configure" ]; then
 		update-mime-database /usr/share/mime || true
 	fi
 
+	# Route dcursor:// to dCursor; route cursor:// through the bridge so GitHub OAuth
+	# callbacks land in dCursor when a connect flow is active there.
+	if command -v xdg-mime >/dev/null 2>&1; then
+		xdg-mime default dcursor-url-handler.desktop x-scheme-handler/dcursor 2>/dev/null || true
+		xdg-mime default dcursor-cursor-bridge.desktop x-scheme-handler/cursor 2>/dev/null || true
+	fi
+
+	# Upgrades only replace /usr/share/dcursor — chats live in ~/.config/dCursor
+	# and ~/.dcursor, which are never touched by package install/upgrade.
+	if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
+		USER_HOME="$(getent passwd "$SUDO_USER" 2>/dev/null | cut -d: -f6 || true)"
+		if [ -n "$USER_HOME" ] && [ -d "${USER_HOME}/.config/dCursor" ]; then
+			echo "dCursor upgraded. Existing chats in ${USER_HOME}/.config/dCursor were kept."
+		fi
+	fi
+
 	if command -v apparmor_parser >/dev/null 2>&1; then
 		if systemctl is-active --quiet apparmor 2>/dev/null; then
 			apparmor_parser -r /etc/apparmor.d/dcursor-sandbox 2>/dev/null || true

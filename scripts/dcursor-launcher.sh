@@ -3,6 +3,8 @@
 # dCursor launcher - isolated mirror of Cursor IDE and agent.
 
 DCURSOR_APP_ROOT="/usr/share/dcursor"
+. "${DCURSOR_APP_ROOT}/bin/dcursor-launch-env.sh"
+dcursor_prepare_launch_env
 DCURSOR_CONFIG_DIR="${HOME}/.dcursor"
 DCURSOR_AGENT_DATA_DIR="${HOME}/.local/share/dcursor-agent"
 DCURSOR_AGENT_BIN="${HOME}/.local/bin/dcursor-agent"

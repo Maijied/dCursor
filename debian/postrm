@@ -6,6 +6,13 @@ if [ "$1" = "purge" ]; then
 	rm -f /etc/apparmor.d/dcursor-sandbox
 fi
 
+if command -v xdg-mime >/dev/null 2>&1; then
+	# Restore Cursor as the default cursor:// handler when dCursor is removed.
+	if [ -f /usr/share/applications/cursor-url-handler.desktop ]; then
+		xdg-mime default cursor-url-handler.desktop x-scheme-handler/cursor 2>/dev/null || true
+	fi
+fi
+
 if hash update-desktop-database 2>/dev/null; then
 	update-desktop-database /usr/share/applications || true
 fi

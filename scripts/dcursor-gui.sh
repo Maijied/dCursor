@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 # GUI launcher for dCursor — prevents EPIPE when stdout/stderr are closed (desktop launch).
 DCURSOR_APP_ROOT="/usr/share/dcursor"
+. "${DCURSOR_APP_ROOT}/bin/dcursor-launch-env.sh"
+dcursor_prepare_launch_env
 ELECTRON="${DCURSOR_APP_ROOT}/dcursor"
 SANDBOX="${DCURSOR_APP_ROOT}/chrome-sandbox"
 LOG="${XDG_CACHE_HOME:-$HOME/.cache}/dcursor-launch.log"

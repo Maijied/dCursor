@@ -7,6 +7,7 @@ BUILD_DIR="${DCURSOR_BUILD_DIR:-/tmp/dcursor-build.$$}"
 STAGING_DIR="${BUILD_DIR}/staging"
 DIST_DIR="${ROOT_DIR}/dist"
 CURSOR_SOURCE="${CURSOR_SOURCE:-/usr/share/cursor}"
+CURSOR_CACHE_DIR="${DCURSOR_CACHE_DIR:-/tmp/dcursor-cursor-cache}"
 
 die() {
 	echo "error: $*" >&2
@@ -48,16 +49,24 @@ get_cursor_depends() {
 export_icon_png() {
 	local svg="${ROOT_DIR}/assets/co.anysphere.dcursor.svg"
 	local out="${STAGING_DIR}/usr/share/pixmaps/co.anysphere.dcursor.png"
+	local splash_out="${ROOT_DIR}/assets/co.anysphere.dcursor-splash.png"
 
-	if command -v rsvg-convert >/dev/null 2>&1; then
-		rsvg-convert -w 512 -h 512 "$svg" -o "$out"
-	elif command -v inkscape >/dev/null 2>&1; then
-		inkscape "$svg" --export-type=png --export-filename="$out" -w 512 -h 512
-	elif command -v convert >/dev/null 2>&1; then
-		convert -background none "$svg" -resize 512x512 "$out"
-	else
-		die "need rsvg-convert, inkscape, or imagemagick to export icon PNG"
-	fi
+	_render_png() {
+		local width="$1" height="$2" dest="$3"
+		if command -v rsvg-convert >/dev/null 2>&1; then
+			rsvg-convert -w "$width" -h "$height" "$svg" -o "$dest"
+		elif command -v inkscape >/dev/null 2>&1; then
+			inkscape "$svg" --export-type=png --export-filename="$dest" -w "$width" -h "$height"
+		elif command -v convert >/dev/null 2>&1; then
+			convert -background none "$svg" -resize "${width}x${height}" "$dest"
+		else
+			die "need rsvg-convert, inkscape, or imagemagick to export icon PNG"
+		fi
+	}
+
+	mkdir -p "${ROOT_DIR}/assets"
+	_render_png 512 512 "$out"
+	_render_png 421 480 "${splash_out}"
 }
 
 preflight() {
@@ -80,18 +89,36 @@ preflight() {
 	fi
 }
 
+ensure_cursor_cache() {
+	local cursor_version
+	cursor_version="$(get_cursor_version)"
+	local cache_tree="${CURSOR_CACHE_DIR}/tree"
+	local cache_marker="${CURSOR_CACHE_DIR}/.cursor-version"
+
+	if [ -f "$cache_marker" ] && [ "$(cat "$cache_marker")" = "$cursor_version" ] && [ -d "$cache_tree" ]; then
+		echo "==> Using cached Cursor tree (${CURSOR_CACHE_DIR}, v${cursor_version})"
+		return 0
+	fi
+
+	echo "==> Populating Cursor cache (v${cursor_version}) — one-time slow step"
+	rm -rf "$CURSOR_CACHE_DIR"
+	mkdir -p "$cache_tree"
+	cp -a "$CURSOR_SOURCE"/. "$cache_tree/"
+	echo "$cursor_version" > "$cache_marker"
+}
+
 stage_cursor_tree() {
-	echo "==> Staging Cursor tree"
+	local cache_tree="${CURSOR_CACHE_DIR}/tree"
+	ensure_cursor_cache
+
+	echo "==> Staging dCursor tree from cache"
 	rm -rf "$STAGING_DIR"
 	mkdir -p "${STAGING_DIR}/usr/share/dcursor"
 
-	if cp -al "$CURSOR_SOURCE"/. "${STAGING_DIR}/usr/share/dcursor/" 2>/dev/null; then
-		echo "    used hardlink copy (cp -al)"
+	if cp -a "$cache_tree"/. "${STAGING_DIR}/usr/share/dcursor/"; then
+		echo "    copied from cache"
 	else
-		echo "    hardlink copy unavailable (cross-device), using full copy (cp -a)"
-		rm -rf "${STAGING_DIR}/usr/share/dcursor"
-		mkdir -p "${STAGING_DIR}/usr/share/dcursor"
-		cp -a "$CURSOR_SOURCE"/. "${STAGING_DIR}/usr/share/dcursor/"
+		die "failed to copy Cursor tree from cache"
 	fi
 
 	if [ -f "${STAGING_DIR}/usr/share/dcursor/cursor" ]; then
@@ -100,10 +127,31 @@ stage_cursor_tree() {
 }
 
 patch_product_json() {
-	echo "==> Patching product.json"
-	python3 "${ROOT_DIR}/scripts/patch-product-json.py" \
+	echo "==> Patching product.json and UI branding"
+	# Export icon first so branding patch can copy PNG into app resources
+	export_icon_png_early
+	python3 "${ROOT_DIR}/scripts/patch-branding.py" \
 		"$IDENTITY_FILE" \
-		"${STAGING_DIR}/usr/share/dcursor/resources/app/product.json"
+		"${STAGING_DIR}/usr/share/dcursor"
+}
+
+export_icon_png_early() {
+	local svg="${ROOT_DIR}/assets/co.anysphere.dcursor.svg"
+	mkdir -p "${ROOT_DIR}/assets"
+	if [ ! -f "${ROOT_DIR}/assets/co.anysphere.dcursor.png" ]; then
+		if command -v rsvg-convert >/dev/null 2>&1; then
+			rsvg-convert -w 512 -h 512 "$svg" -o "${ROOT_DIR}/assets/co.anysphere.dcursor.png"
+		elif command -v convert >/dev/null 2>&1; then
+			convert -background none "$svg" -resize 512x512 "${ROOT_DIR}/assets/co.anysphere.dcursor.png"
+		fi
+	fi
+	if [ ! -f "${ROOT_DIR}/assets/co.anysphere.dcursor-splash.png" ]; then
+		if command -v rsvg-convert >/dev/null 2>&1; then
+			rsvg-convert -w 421 -h 480 "$svg" -o "${ROOT_DIR}/assets/co.anysphere.dcursor-splash.png"
+		elif command -v convert >/dev/null 2>&1; then
+			convert -background none "$svg" -resize 421x480 "${ROOT_DIR}/assets/co.anysphere.dcursor-splash.png"
+		fi
+	fi
 }
 
 rewrite_paths_in_tree() {
@@ -127,6 +175,9 @@ install_launcher_and_bins() {
 	mkdir -p "${STAGING_DIR}/usr/share/dcursor/bin"
 	install -m 755 "${ROOT_DIR}/scripts/dcursor-launcher.sh" "${STAGING_DIR}/usr/share/dcursor/bin/dcursor"
 	install -m 755 "${ROOT_DIR}/scripts/dcursor-gui.sh" "${STAGING_DIR}/usr/share/dcursor/bin/dcursor-gui"
+	install -m 755 "${ROOT_DIR}/scripts/dcursor-cursor-bridge.sh" "${STAGING_DIR}/usr/share/dcursor/bin/dcursor-cursor-bridge"
+	install -m 755 "${ROOT_DIR}/scripts/dcursor-backup-user-data.sh" "${STAGING_DIR}/usr/share/dcursor/bin/dcursor-backup-user-data"
+	install -m 644 "${ROOT_DIR}/scripts/dcursor-launch-env.sh" "${STAGING_DIR}/usr/share/dcursor/bin/dcursor-launch-env.sh"
 
 	rm -f "${STAGING_DIR}/usr/share/dcursor/bin/cursor"
 
@@ -155,6 +206,7 @@ install_system_files() {
 
 	install -m 644 "${ROOT_DIR}/assets/dcursor.desktop" "${STAGING_DIR}/usr/share/applications/dcursor.desktop"
 	install -m 644 "${ROOT_DIR}/assets/dcursor-url-handler.desktop" "${STAGING_DIR}/usr/share/applications/dcursor-url-handler.desktop"
+	install -m 644 "${ROOT_DIR}/assets/dcursor-cursor-bridge.desktop" "${STAGING_DIR}/usr/share/applications/dcursor-cursor-bridge.desktop"
 	install -m 644 "${ROOT_DIR}/assets/dcursor.appdata.xml" "${STAGING_DIR}/usr/share/appdata/dcursor.appdata.xml"
 	install -m 644 "${ROOT_DIR}/assets/dcursor-workspace.xml" "${STAGING_DIR}/usr/share/mime/packages/dcursor-workspace.xml"
 	install -m 644 "${ROOT_DIR}/assets/dcursor-sandbox" "${STAGING_DIR}/etc/apparmor.d/dcursor-sandbox"
@@ -208,8 +260,12 @@ build_deb() {
 	cursor_version="$(get_cursor_version)"
 	dcursor_version="${cursor_version}.${version_suffix}"
 	deb_name="dCursor_${dcursor_version}_amd64.deb"
+	local tmp_deb
+	tmp_deb="$(mktemp /tmp/dcursor-XXXXXX.deb)"
 
-	dpkg-deb --root-owner-group --build "$STAGING_DIR" "${DIST_DIR}/${deb_name}"
+	dpkg-deb --root-owner-group --build "$STAGING_DIR" "$tmp_deb"
+	cp -f "$tmp_deb" "${DIST_DIR}/${deb_name}"
+	rm -f "$tmp_deb"
 	ln -sf "${deb_name}" "${DIST_DIR}/dCursor.deb"
 
 	echo ""

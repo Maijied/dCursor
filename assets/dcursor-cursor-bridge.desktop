@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=dCursor - cursor:// Bridge
+Comment=Routes cursor:// URLs to dCursor or Cursor based on active GitHub connect flow
+GenericName=Text Editor
+Exec=/usr/share/dcursor/bin/dcursor-cursor-bridge %u
+Icon=co.anysphere.dcursor
+Type=Application
+NoDisplay=true
+StartupNotify=false
+Categories=Utility;TextEditor;Development;IDE;
+MimeType=x-scheme-handler/cursor;
+Keywords=dcursor;cursor;
