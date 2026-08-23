@@ -159,6 +159,10 @@ install_system_files() {
 	install -m 644 "${ROOT_DIR}/assets/dcursor-sandbox" "${STAGING_DIR}/etc/apparmor.d/dcursor-sandbox"
 	install -m 644 "${ROOT_DIR}/assets/dcursor.bash-completion" "${STAGING_DIR}/usr/share/bash-completion/completions/dcursor"
 
+	if [ -f "${STAGING_DIR}/usr/share/dcursor/chrome-sandbox" ]; then
+		chmod 4755 "${STAGING_DIR}/usr/share/dcursor/chrome-sandbox"
+	fi
+
 	export_icon_png
 }
 

@@ -6,6 +6,12 @@ if [ "$1" = "configure" ]; then
 	ln -sf /usr/share/dcursor/bin/dcursor /usr/bin/dcursor
 	chmod 755 /usr/bin/dcursor
 
+	# Electron requires the SUID sandbox helper (same as Cursor package)
+	if [ -f /usr/share/dcursor/chrome-sandbox ]; then
+		chown root:root /usr/share/dcursor/chrome-sandbox
+		chmod 4755 /usr/share/dcursor/chrome-sandbox
+	fi
+
 	if hash update-desktop-database 2>/dev/null; then
 		update-desktop-database /usr/share/applications || true
 	fi
