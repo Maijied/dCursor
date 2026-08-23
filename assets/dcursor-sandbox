@@ -1,0 +1,69 @@
+profile dcursor_sandbox /usr/share/dcursor/resources/app/resources/helpers/cursorsandbox {
+  file,
+  /** ix,
+
+  capability sys_admin,
+  capability net_admin,
+  capability chown,
+  capability setuid,
+  capability setgid,
+  capability setpcap,
+  network unix,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  signal (receive) peer=unconfined,
+
+  mount,
+  remount,
+  umount,
+
+  /usr/share/dcursor/resources/app/resources/helpers/cursorsandbox mr,
+}
+
+profile dcursor_sandbox_remote /home/*/.dcursor-server/bin/*/*/resources/helpers/cursorsandbox {
+  file,
+  /** ix,
+
+  capability sys_admin,
+  capability net_admin,
+  capability chown,
+  capability setuid,
+  capability setgid,
+  capability setpcap,
+  network unix,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+  signal (receive) peer=unconfined,
+
+  mount,
+  remount,
+  umount,
+
+  /home/*/.dcursor-server/bin/*/*/resources/helpers/cursorsandbox mr,
+}
+
+profile dcursor_sandbox_agent_cli /home/*/.local/share/dcursor-agent/versions/*/cursorsandbox {
+  file,
+  /** ix,
+
+  capability sys_admin,
+  capability net_admin,
+  capability chown,
+  capability setuid,
+  capability setgid,
+  capability setpcap,
+  network unix,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+  signal (receive) peer=unconfined,
+
+  mount,
+  remount,
+  umount,
+
+  /home/*/.local/share/dcursor-agent/versions/*/cursorsandbox mr,
+}

@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "remove" ] || [ "$1" = "deconfigure" ]; then
+	rm -f /usr/bin/dcursor
+
+	if command -v apparmor_parser >/dev/null 2>&1; then
+		if systemctl is-active --quiet apparmor 2>/dev/null; then
+			apparmor_parser -R /etc/apparmor.d/dcursor-sandbox 2>/dev/null || true
+		fi
+	fi
+fi
+
+exit 0

@@ -1,0 +1,75 @@
+name: Build and Release dCursor
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 dpkg-dev librsvg2-bin jq curl
+
+      - name: Fetch Cursor .deb
+        run: chmod +x scripts/ci-fetch-cursor.sh && ./scripts/ci-fetch-cursor.sh
+
+      - name: Build dCursor package
+        run: chmod +x build.sh && ./build.sh
+
+      - name: Prepare release filename
+        run: |
+          DEB="$(ls dist/dCursor_*.deb | head -1)"
+          cp "$DEB" dist/dCursor.deb
+          ls -lh dist/
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dCursor-deb
+          path: dist/*.deb
+          if-no-files-found: error
+
+      - name: Upload to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.deb
+          generate_release_notes: true
+
+  release-latest:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dCursor-deb
+          path: dist/
+
+      - name: Publish rolling latest release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: dCursor Latest
+          body: |
+            Automated rolling build from main branch.
+            Download **dCursor.deb** below for the latest amd64 package.
+          files: dist/*.deb
+          prerelease: true
+          make_latest: false

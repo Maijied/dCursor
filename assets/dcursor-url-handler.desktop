@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=dCursor - URL Handler
+Comment=The AI Code Editor (dCursor mirror instance).
+GenericName=Text Editor
+Exec=/usr/bin/dcursor --open-url %U
+Icon=co.anysphere.dcursor
+Type=Application
+NoDisplay=true
+StartupNotify=true
+Categories=Utility;TextEditor;Development;IDE;
+MimeType=x-scheme-handler/dcursor;
+Keywords=dcursor;

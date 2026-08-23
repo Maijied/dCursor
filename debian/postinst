@@ -1,0 +1,24 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ]; then
+	rm -f /usr/bin/dcursor
+	ln -sf /usr/share/dcursor/bin/dcursor /usr/bin/dcursor
+	chmod 755 /usr/bin/dcursor
+
+	if hash update-desktop-database 2>/dev/null; then
+		update-desktop-database /usr/share/applications || true
+	fi
+
+	if hash update-mime-database 2>/dev/null; then
+		update-mime-database /usr/share/mime || true
+	fi
+
+	if command -v apparmor_parser >/dev/null 2>&1; then
+		if systemctl is-active --quiet apparmor 2>/dev/null; then
+			apparmor_parser -r /etc/apparmor.d/dcursor-sandbox 2>/dev/null || true
+		fi
+	fi
+fi
+
+exit 0

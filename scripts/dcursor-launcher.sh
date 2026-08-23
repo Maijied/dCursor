@@ -1,0 +1,167 @@
+#!/usr/bin/env sh
+#
+# dCursor launcher - isolated mirror of Cursor IDE and agent.
+
+DCURSOR_APP_ROOT="/usr/share/dcursor"
+DCURSOR_CONFIG_DIR="${HOME}/.dcursor"
+DCURSOR_AGENT_DATA_DIR="${HOME}/.local/share/dcursor-agent"
+DCURSOR_AGENT_BIN="${HOME}/.local/bin/dcursor-agent"
+
+find_dcursor_cli() {
+	CURSOR_CLI=""
+	CURSOR_CLI_MODE=""
+
+	if [ -n "$VSCODE_IPC_HOOK_CLI" ]; then
+		REMOTE_CLI="$(which -a 'dcursor' 2>/dev/null | grep /remote-cli/ || true)"
+		if [ -n "$REMOTE_CLI" ]; then
+			CURSOR_CLI="$REMOTE_CLI"
+			CURSOR_CLI_MODE="remote"
+			return 0
+		fi
+	fi
+
+	if [ ! -L "$0" ]; then
+		VSCODE_PATH="$(dirname "$0")/.."
+	else
+		if command -v readlink >/dev/null; then
+			VSCODE_PATH="$(dirname "$(readlink -f "$0")")/.."
+		else
+			VSCODE_PATH="$DCURSOR_APP_ROOT"
+		fi
+	fi
+
+	ELECTRON="$VSCODE_PATH/dcursor"
+	CLI="$VSCODE_PATH/resources/app/out/cli.js"
+
+	if [ -x "$ELECTRON" ] && [ -f "$CLI" ]; then
+		CURSOR_CLI_MODE="local"
+		return 0
+	else
+		return 1
+	fi
+}
+
+use_dcursor_cli() {
+	if [ "$CURSOR_CLI_MODE" = "remote" ]; then
+		exec "$CURSOR_CLI" "$@"
+	else
+		ELECTRON_RUN_AS_NODE=1 "$ELECTRON" "$CLI" "$@"
+	fi
+}
+
+ensure_dcursor_agent() {
+	if [ -x "$DCURSOR_AGENT_BIN" ]; then
+		return 0
+	fi
+
+	mkdir -p "${HOME}/.local/bin" "${DCURSOR_AGENT_DATA_DIR}"
+
+	if [ -d "${HOME}/.local/share/cursor-agent/versions" ]; then
+		echo "Setting up dcursor-agent from existing cursor-agent install..."
+		cp -al "${HOME}/.local/share/cursor-agent/." "${DCURSOR_AGENT_DATA_DIR}/" 2>/dev/null \
+			|| cp -a "${HOME}/.local/share/cursor-agent/." "${DCURSOR_AGENT_DATA_DIR}/"
+	else
+		if command -v bash >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+			echo "Installing dcursor-agent..."
+			CURSOR_DATA_DIR="$DCURSOR_AGENT_DATA_DIR" \
+				curl -sS https://cursor.com/install | bash >/dev/null 2>&1
+			if command -v tput >/dev/null 2>&1; then
+				tput cuu1 && tput el
+			fi
+			if [ -d "${HOME}/.local/share/cursor-agent/versions" ] \
+				&& [ ! -d "${DCURSOR_AGENT_DATA_DIR}/versions" ]; then
+				cp -al "${HOME}/.local/share/cursor-agent/." "${DCURSOR_AGENT_DATA_DIR}/" 2>/dev/null \
+					|| cp -a "${HOME}/.local/share/cursor-agent/." "${DCURSOR_AGENT_DATA_DIR}/"
+			fi
+		fi
+	fi
+
+	AGENT_VERSION_DIR=""
+	if [ -d "${DCURSOR_AGENT_DATA_DIR}/versions" ]; then
+		AGENT_VERSION_DIR="$(ls -1 "${DCURSOR_AGENT_DATA_DIR}/versions" 2>/dev/null | tail -1)"
+	fi
+
+	if [ -n "$AGENT_VERSION_DIR" ] && [ -x "${DCURSOR_AGENT_DATA_DIR}/versions/${AGENT_VERSION_DIR}/cursor-agent" ]; then
+		ln -sf "${DCURSOR_AGENT_DATA_DIR}/versions/${AGENT_VERSION_DIR}/cursor-agent" "$DCURSOR_AGENT_BIN"
+		return 0
+	fi
+
+	return 1
+}
+
+run_dcursor_agent() {
+	export CURSOR_CONFIG_DIR="$DCURSOR_CONFIG_DIR"
+	export CURSOR_DATA_DIR="$DCURSOR_AGENT_DATA_DIR"
+	export CURSOR_INVOKED_AS="dcursor-agent"
+	unset CURSOR_CLI
+	unset CURSOR_CLI_MODE
+
+	if ! ensure_dcursor_agent; then
+		echo "Error: Could not install dcursor-agent." 1>&2
+		echo "Install cursor-agent first with 'cursor agent', or run:" 1>&2
+		echo "  curl -sS https://cursor.com/install | bash" 1>&2
+		exit 1
+	fi
+
+	OUTPUT=$({ "$DCURSOR_AGENT_BIN" --min-version=2025.10.01 status; } 2>&1)
+	EXIT_CODE=$?
+
+	if { [ "$EXIT_CODE" -eq 2 ] || { [ "$EXIT_CODE" -eq 1 ] && echo "$OUTPUT" | grep -qi "unknown option"; }; }; then
+		echo "dcursor-agent version is outdated, updating..."
+		"$DCURSOR_AGENT_BIN" update >/dev/null 2>&1
+		if command -v tput >/dev/null 2>&1; then
+			tput cuu1 && tput el
+		fi
+	fi
+
+	export CURSOR_CLI_COMPAT=1
+	exec "$DCURSOR_AGENT_BIN" "$@"
+}
+
+if grep -qi Microsoft /proc/version 2>/dev/null && [ -z "$DONT_PROMPT_WSL_INSTALL" ]; then
+	echo "To use dCursor with WSL, install dCursor in Windows." 1>&2
+	printf "Continue anyway? [y/N] " 1>&2
+	read -r YN
+	YN=$(printf '%s' "$YN" | tr '[:upper:]' '[:lower:]')
+	case "$YN" in
+		y | yes) ;;
+		*) exit 1 ;;
+	esac
+fi
+
+if [ "$(id -u)" = "0" ]; then
+	for i in "$@"; do
+		case "$i" in
+			--user-data-dir | --user-data-dir=* | --file-write | tunnel)
+				CAN_LAUNCH_AS_ROOT=1
+				;;
+		esac
+	done
+	if [ -z "$CAN_LAUNCH_AS_ROOT" ]; then
+		echo "Do not run dCursor as root without --user-data-dir." 1>&2
+		exit 1
+	fi
+fi
+
+export VSCODE_NODE_OPTIONS=$NODE_OPTIONS
+export VSCODE_NODE_REPL_EXTERNAL_MODULE=$NODE_REPL_EXTERNAL_MODULE
+unset NODE_OPTIONS
+unset NODE_REPL_EXTERNAL_MODULE
+unset CURSOR_CLI
+unset CURSOR_CLI_MODE
+
+if [ "$1" = "agent" ] && [ "$CURSOR_CLI_BLOCK_CURSOR_AGENT" != "true" ]; then
+	shift
+	run_dcursor_agent "$@"
+fi
+
+if ! find_dcursor_cli; then
+	echo "Error: dCursor CLI not found. Is dcursor installed?" 1>&2
+	exit 1
+fi
+
+if [ "$1" = "editor" ]; then
+	shift
+fi
+
+use_dcursor_cli "$@"

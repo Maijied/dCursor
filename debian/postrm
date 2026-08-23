@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "purge" ]; then
+	rm -f /usr/bin/dcursor
+	rm -f /etc/apparmor.d/dcursor-sandbox
+fi
+
+if hash update-desktop-database 2>/dev/null; then
+	update-desktop-database /usr/share/applications || true
+fi
+
+if hash update-mime-database 2>/dev/null; then
+	update-mime-database /usr/share/mime || true
+fi
+
+exit 0

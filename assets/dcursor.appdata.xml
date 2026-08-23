@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>co.anysphere.dcursor</id>
+  <name>dCursor</name>
+  <summary>The AI Code Editor (dCursor mirror instance)</summary>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <description>
+    <p>dCursor is a fully isolated mirror of Cursor for running a separate account alongside the original install.</p>
+  </description>
+  <launchable type="desktop-id">dcursor.desktop</launchable>
+  <url type="homepage">https://cursor.com</url>
+  <provides>
+    <binary>dcursor</binary>
+  </provides>
+</component>
