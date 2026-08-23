@@ -54,9 +54,27 @@ find_dcursor_cli() {
 use_dcursor_cli() {
 	if [ "$CURSOR_CLI_MODE" = "remote" ]; then
 		exec "$CURSOR_CLI" "$@"
-	else
-		ELECTRON_RUN_AS_NODE=1 "$ELECTRON" "$CLI" "$@"
 	fi
+
+	ELECTRON_RUN_AS_NODE=1 exec "$ELECTRON" "$CLI" "$@"
+}
+
+launch_dcursor_gui() {
+	# Launch Electron directly (same as cursor.desktop). Routing GUI through
+	# cli.js leaves stdout closed when started from the desktop shell → EPIPE.
+	exec "$ELECTRON" "$@"
+}
+
+needs_cli_bridge() {
+	case "${1:-}" in
+		-v | --version | -h | --help | --list-extensions | --show-versions | \
+		--install-extension | --install-builtin-extension | --uninstall-extension | \
+		--update-extensions | --locate-extension | --add-mcp | --diff | -d | \
+		--merge | -m | status | tunnel | serve-web)
+			return 0
+			;;
+	esac
+	return 1
 }
 
 ensure_dcursor_agent() {
@@ -176,4 +194,8 @@ if [ "$1" = "editor" ]; then
 	shift
 fi
 
-use_dcursor_cli "$@"
+if needs_cli_bridge "$@"; then
+	use_dcursor_cli "$@"
+else
+	launch_dcursor_gui "$@"
+fi

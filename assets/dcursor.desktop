@@ -2,7 +2,7 @@
 Name=dCursor
 Comment=The AI Code Editor (dCursor mirror instance).
 GenericName=Text Editor
-Exec=/usr/bin/dcursor %F
+Exec=/usr/share/dcursor/dcursor %F
 Icon=co.anysphere.dcursor
 Type=Application
 StartupNotify=false
@@ -14,5 +14,5 @@ Keywords=dcursor;cursor;ai;editor;
 
 [Desktop Action new-empty-window]
 Name=New Empty Window
-Exec=/usr/bin/dcursor --new-window %F
+Exec=/usr/share/dcursor/dcursor --new-window %F
 Icon=co.anysphere.dcursor
