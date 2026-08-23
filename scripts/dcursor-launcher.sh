@@ -7,6 +7,25 @@ DCURSOR_CONFIG_DIR="${HOME}/.dcursor"
 DCURSOR_AGENT_DATA_DIR="${HOME}/.local/share/dcursor-agent"
 DCURSOR_AGENT_BIN="${HOME}/.local/bin/dcursor-agent"
 
+ensure_chrome_sandbox() {
+	SANDBOX="${DCURSOR_APP_ROOT}/chrome-sandbox"
+	[ -f "$SANDBOX" ] || return 0
+
+	# Electron requires root-owned SUID sandbox (mode 4755)
+	if [ -u "$SANDBOX" ] && [ "$(stat -c '%u' "$SANDBOX" 2>/dev/null || echo 1)" = "0" ]; then
+		return 0
+	fi
+
+	if command -v pkexec >/dev/null 2>&1; then
+		pkexec /bin/sh -c "chown root:root '$SANDBOX' && chmod 4755 '$SANDBOX'" 2>/dev/null \
+			&& [ -u "$SANDBOX" ] && return 0
+	fi
+
+	echo "dCursor: chrome-sandbox not configured; launching without sandbox." 1>&2
+	echo "Fix permanently: sudo chmod 4755 $SANDBOX" 1>&2
+	export ELECTRON_DISABLE_SANDBOX=1
+}
+
 find_dcursor_cli() {
 	CURSOR_CLI=""
 	CURSOR_CLI_MODE=""
@@ -20,25 +39,16 @@ find_dcursor_cli() {
 		fi
 	fi
 
-	if [ ! -L "$0" ]; then
-		VSCODE_PATH="$(dirname "$0")/.."
-	else
-		if command -v readlink >/dev/null; then
-			VSCODE_PATH="$(dirname "$(readlink -f "$0")")/.."
-		else
-			VSCODE_PATH="$DCURSOR_APP_ROOT"
-		fi
-	fi
-
+	VSCODE_PATH="$DCURSOR_APP_ROOT"
 	ELECTRON="$VSCODE_PATH/dcursor"
 	CLI="$VSCODE_PATH/resources/app/out/cli.js"
 
 	if [ -x "$ELECTRON" ] && [ -f "$CLI" ]; then
 		CURSOR_CLI_MODE="local"
 		return 0
-	else
-		return 1
 	fi
+
+	return 1
 }
 
 use_dcursor_cli() {
@@ -159,6 +169,8 @@ if ! find_dcursor_cli; then
 	echo "Error: dCursor CLI not found. Is dcursor installed?" 1>&2
 	exit 1
 fi
+
+ensure_chrome_sandbox
 
 if [ "$1" = "editor" ]; then
 	shift
