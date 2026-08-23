@@ -33,8 +33,11 @@ jobs:
 
       - name: Prepare release filename
         run: |
-          DEB="$(ls dist/dCursor_*.deb | head -1)"
-          cp "$DEB" dist/dCursor.deb
+          ls -lh dist/
+          if [ ! -e dist/dCursor.deb ]; then
+            DEB="$(ls dist/dCursor_*.deb | head -1)"
+            ln -sf "$(basename "$DEB")" dist/dCursor.deb
+          fi
           ls -lh dist/
 
       - name: Upload build artifact
