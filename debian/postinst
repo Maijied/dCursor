@@ -24,7 +24,16 @@ if [ "$1" = "configure" ]; then
 	# callbacks land in dCursor when a connect flow is active there.
 	if command -v xdg-mime >/dev/null 2>&1; then
 		xdg-mime default dcursor-url-handler.desktop x-scheme-handler/dcursor 2>/dev/null || true
-		xdg-mime default dcursor-cursor-bridge.desktop x-scheme-handler/cursor 2>/dev/null || true
+		if [ -f /usr/share/applications/dcursor-cursor-bridge.desktop ]; then
+			xdg-mime default dcursor-cursor-bridge.desktop x-scheme-handler/cursor 2>/dev/null || true
+		fi
+	fi
+
+	if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
+		USER_HOME="$(getent passwd "$SUDO_USER" 2>/dev/null | cut -d: -f6 || true)"
+		if [ -n "$USER_HOME" ]; then
+			mkdir -p "${USER_HOME}/.dcursor/sandbox-policies" "${USER_HOME}/.dcursor/projects"
+		fi
 	fi
 
 	# Upgrades only replace /usr/share/dcursor — chats live in ~/.config/dCursor

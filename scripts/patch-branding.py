@@ -61,6 +61,33 @@ def iter_protocol_js_files(app_root: Path):
             yield path
 
 
+def patch_data_paths(app_root: Path, identity: dict) -> int:
+    """Rewrite hardcoded ~/.cursor paths to dCursor-isolated locations."""
+    data_folder = identity.get("dataFolderName", ".dcursor")
+    config_name = identity.get("displayNameLong", identity.get("displayName", "dCursor"))
+
+    replacements = [
+        (".cursor/sandbox-policies", f"{data_folder}/sandbox-policies"),
+        ('(0,i.join)((0,s.homedir)(),".cursor")', f'(0,i.join)((0,s.homedir)(),"{data_folder}")'),
+        ('homedir)(),".cursor"', f'homedir)(),"{data_folder}"'),
+        ('(0,i.join)(t,"cursor")', f'(0,i.join)(t,"{config_name}")'),
+        ('join)(t,"cursor")', f'join)(t,"{config_name}")'),
+        ('dataFolderName:".cursor"', f'dataFolderName:"{data_folder}"'),
+    ]
+
+    patched = 0
+    for path in iter_protocol_js_files(app_root):
+        text = path.read_text(encoding="utf-8")
+        original = text
+        for old, new in replacements:
+            text = text.replace(old, new)
+        if text != original:
+            path.write_text(text, encoding="utf-8")
+            patched += 1
+            print(f"Patched data paths in {path}")
+    return patched
+
+
 def patch_url_protocol(app_root: Path, identity: dict) -> int:
     """Rewrite cursor:// deep links to dcursor:// and fix scheme checks."""
     scheme = identity.get("urlProtocol", "dcursor")
@@ -295,6 +322,7 @@ def main() -> int:
 
     patch_package_json(app_root, identity)
     patch_main_js(app_root)
+    path_files = patch_data_paths(app_root, identity)
     protocol_files = patch_url_protocol(app_root, identity)
 
     product_path = app_root / "resources/app/product.json"
@@ -304,7 +332,7 @@ def main() -> int:
 
     print(
         f"Branding patch complete ({patched_files} JS bundles, "
-        f"{protocol_files} protocol files)"
+        f"{path_files} path files, {protocol_files} protocol files)"
     )
     return 0
 

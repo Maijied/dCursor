@@ -5,7 +5,8 @@
 DCURSOR_APP_ROOT="/usr/share/dcursor"
 . "${DCURSOR_APP_ROOT}/bin/dcursor-launch-env.sh"
 dcursor_prepare_launch_env
-DCURSOR_CONFIG_DIR="${HOME}/.dcursor"
+DCURSOR_CONFIG_DIR="${HOME}/.config/dCursor"
+DCURSOR_DATA_DIR="${HOME}/.dcursor"
 DCURSOR_AGENT_DATA_DIR="${HOME}/.local/share/dcursor-agent"
 DCURSOR_AGENT_BIN="${HOME}/.local/bin/dcursor-agent"
 
@@ -126,7 +127,8 @@ ensure_dcursor_agent() {
 
 run_dcursor_agent() {
 	export CURSOR_CONFIG_DIR="$DCURSOR_CONFIG_DIR"
-	export CURSOR_DATA_DIR="$DCURSOR_AGENT_DATA_DIR"
+	export CURSOR_DATA_DIR="$DCURSOR_DATA_DIR"
+	export CURSOR_AGENT_DATA_DIR="$DCURSOR_AGENT_DATA_DIR"
 	export CURSOR_INVOKED_AS="dcursor-agent"
 	unset CURSOR_CLI
 	unset CURSOR_CLI_MODE
