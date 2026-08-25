@@ -20,12 +20,21 @@ if [ "$1" = "configure" ]; then
 		update-mime-database /usr/share/mime || true
 	fi
 
-	# Route dcursor:// to dCursor; route cursor:// through the bridge so GitHub OAuth
-	# callbacks land in dCursor when a connect flow is active there.
+	if hash gtk-update-icon-cache 2>/dev/null; then
+		gtk-update-icon-cache -f /usr/share/icons/hicolor 2>/dev/null || true
+	fi
+
+	# Route dcursor:// to dCursor. cursor:// bridge is OFF by default because it can
+	# break profile/auth in both Cursor and dCursor when both are installed.
 	if command -v xdg-mime >/dev/null 2>&1; then
 		xdg-mime default dcursor-url-handler.desktop x-scheme-handler/dcursor 2>/dev/null || true
-		if [ -f /usr/share/applications/dcursor-cursor-bridge.desktop ]; then
+		if [ "${DCURSOR_REGISTER_CURSOR_BRIDGE:-0}" = "1" ] \
+			&& [ -f /usr/share/applications/dcursor-cursor-bridge.desktop ]; then
 			xdg-mime default dcursor-cursor-bridge.desktop x-scheme-handler/cursor 2>/dev/null || true
+		else
+			if [ -f /usr/share/applications/cursor-url-handler.desktop ]; then
+				xdg-mime default cursor-url-handler.desktop x-scheme-handler/cursor 2>/dev/null || true
+			fi
 		fi
 	fi
 
@@ -33,6 +42,7 @@ if [ "$1" = "configure" ]; then
 		USER_HOME="$(getent passwd "$SUDO_USER" 2>/dev/null | cut -d: -f6 || true)"
 		if [ -n "$USER_HOME" ]; then
 			mkdir -p "${USER_HOME}/.dcursor/sandbox-policies" "${USER_HOME}/.dcursor/projects"
+			chown -R "${SUDO_USER}:${SUDO_USER}" "${USER_HOME}/.dcursor" 2>/dev/null || true
 		fi
 	fi
 

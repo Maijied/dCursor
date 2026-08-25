@@ -92,23 +92,27 @@ ensure_dcursor_agent() {
 
 	mkdir -p "${HOME}/.local/bin" "${DCURSOR_AGENT_DATA_DIR}"
 
-	if [ -d "${HOME}/.local/share/cursor-agent/versions" ]; then
-		echo "Setting up dcursor-agent from existing cursor-agent install..."
-		cp -al "${HOME}/.local/share/cursor-agent/." "${DCURSOR_AGENT_DATA_DIR}/" 2>/dev/null \
-			|| cp -a "${HOME}/.local/share/cursor-agent/." "${DCURSOR_AGENT_DATA_DIR}/"
-	else
-		if command -v bash >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
-			echo "Installing dcursor-agent..."
-			CURSOR_DATA_DIR="$DCURSOR_AGENT_DATA_DIR" \
-				curl -sS https://cursor.com/install | bash >/dev/null 2>&1
-			if command -v tput >/dev/null 2>&1; then
-				tput cuu1 && tput el
-			fi
-			if [ -d "${HOME}/.local/share/cursor-agent/versions" ] \
-				&& [ ! -d "${DCURSOR_AGENT_DATA_DIR}/versions" ]; then
-				cp -al "${HOME}/.local/share/cursor-agent/." "${DCURSOR_AGENT_DATA_DIR}/" 2>/dev/null \
-					|| cp -a "${HOME}/.local/share/cursor-agent/." "${DCURSOR_AGENT_DATA_DIR}/"
-			fi
+	seed_agent_from_cursor() {
+		if [ "${DCURSOR_SEED_AGENT_FROM_CURSOR:-0}" != "1" ]; then
+			return 1
+		fi
+		if [ ! -d "${HOME}/.local/share/cursor-agent/versions" ]; then
+			return 1
+		fi
+		echo "Seeding dcursor-agent from cursor-agent (opt-in copy)..."
+		cp -a "${HOME}/.local/share/cursor-agent/." "${DCURSOR_AGENT_DATA_DIR}/"
+		return 0
+	}
+
+	if seed_agent_from_cursor; then
+		:
+	elif command -v bash >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+		echo "Installing dcursor-agent (isolated)..."
+		CURSOR_DATA_DIR="$DCURSOR_AGENT_DATA_DIR" \
+			CURSOR_CONFIG_DIR="$DCURSOR_CONFIG_DIR" \
+			curl -sS https://cursor.com/install | bash >/dev/null 2>&1
+		if command -v tput >/dev/null 2>&1; then
+			tput cuu1 && tput el
 		fi
 	fi
 
@@ -190,6 +194,11 @@ unset CURSOR_CLI_MODE
 if [ "$1" = "agent" ] && [ "$CURSOR_CLI_BLOCK_CURSOR_AGENT" != "true" ]; then
 	shift
 	run_dcursor_agent "$@"
+fi
+
+if [ "$1" = "import-conversations" ] || [ "$1" = "import-from-cursor" ]; then
+	shift
+	exec "${DCURSOR_APP_ROOT}/bin/dcursor-import-cursor-conversations.sh" "$@"
 fi
 
 if ! find_dcursor_cli; then

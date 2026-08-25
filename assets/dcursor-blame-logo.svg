@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="dCursor">
+  <defs>
+    <linearGradient id="panel" x1="8" y1="20" x2="56" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#39FF14"/>
+      <stop offset="100%" stop-color="#00F3FF"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="44" cy="36" rx="10" ry="8" fill="currentColor" opacity="0.85"/>
+  <ellipse cx="36" cy="34" rx="9" ry="7" fill="currentColor" opacity="0.9"/>
+  <ellipse cx="28" cy="31" rx="8" ry="6" fill="currentColor"/>
+  <ellipse cx="20" cy="26" rx="8" ry="6" fill="currentColor"/>
+  <ellipse cx="44" cy="36" rx="6" ry="4" fill="url(#panel)" opacity="0.7"/>
+  <ellipse cx="28" cy="31" rx="5" ry="3" fill="url(#panel)" opacity="0.55"/>
+  <circle cx="16" cy="24" r="3.5" fill="#39FF14"/>
+  <circle cx="22" cy="24" r="3.5" fill="#39FF14"/>
+</svg>

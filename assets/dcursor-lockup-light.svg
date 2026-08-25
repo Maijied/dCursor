@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" fill="none" role="img" aria-label="dCursor by Lorapok Labs">
+  <defs>
+    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00B8D4"/>
+      <stop offset="100%" stop-color="#9333EA"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="20" y1="30" x2="120" y2="130" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#64748B"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="24" y1="48" x2="116" y2="112" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#22C55E"/>
+      <stop offset="100%" stop-color="#0891B2"/>
+    </linearGradient>
+    <radialGradient id="eye" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="40%" stop-color="#22C55E"/>
+      <stop offset="100%" stop-color="#0891B2" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <g transform="translate(16,16)">
+    <rect x="0" y="0" width="128" height="128" rx="28" fill="#F8FAFC"/>
+    <rect x="0" y="0" width="128" height="128" rx="28" fill="none" stroke="url(#brand)" stroke-width="3" opacity="0.45"/>
+    <ellipse cx="88" cy="74" rx="18" ry="14" fill="url(#metal)"/>
+    <ellipse cx="76" cy="70" rx="16" ry="12" fill="url(#metal)"/>
+    <ellipse cx="64" cy="66" rx="15" ry="11" fill="url(#metal)"/>
+    <ellipse cx="52" cy="60" rx="14" ry="10" fill="url(#metal)"/>
+    <ellipse cx="42" cy="52" rx="16" ry="12" fill="url(#metal)"/>
+    <ellipse cx="76" cy="74" rx="12" ry="8" fill="url(#panel)" opacity="0.55"/>
+    <ellipse cx="42" cy="52" rx="10" ry="7" fill="url(#panel)" opacity="0.35"/>
+    <circle cx="36" cy="48" r="6" fill="url(#eye)"/>
+    <circle cx="48" cy="48" r="6" fill="url(#eye)"/>
+    <circle cx="36" cy="48" r="2.5" fill="#0F172A"/>
+    <circle cx="48" cy="48" r="2.5" fill="#0F172A"/>
+    <path d="M92 92 118 108l-9 1 5 9-5 3-5-8-6 7V92Z" fill="#0F172A" opacity="0.92"/>
+  </g>
+
+  <text x="168" y="92" font-family="ui-sans-serif, system-ui, sans-serif" font-size="56" font-weight="700" fill="#0F172A">dCursor</text>
+  <text x="170" y="118" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="500" fill="#64748B" letter-spacing="0.08em">LORAPOK LABS</text>
+</svg>

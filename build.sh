@@ -128,8 +128,13 @@ stage_cursor_tree() {
 
 patch_product_json() {
 	echo "==> Patching product.json and UI branding"
-	# Export icon first so branding patch can copy PNG into app resources
 	export_icon_png_early
+	python3 "${ROOT_DIR}/scripts/generate-dcursor-splash-video.py" || {
+		if [ "${DCURSOR_STRICT_BUILD:-0}" = "1" ]; then
+			die "splash WEBM generation failed (DCURSOR_STRICT_BUILD=1)"
+		fi
+		echo "warn: splash WEBM generation failed; static splash PNGs will still be used" >&2
+	}
 	python3 "${ROOT_DIR}/scripts/patch-branding.py" \
 		"$IDENTITY_FILE" \
 		"${STAGING_DIR}/usr/share/dcursor"
@@ -138,18 +143,12 @@ patch_product_json() {
 export_icon_png_early() {
 	local svg="${ROOT_DIR}/assets/co.anysphere.dcursor.svg"
 	mkdir -p "${ROOT_DIR}/assets"
-	if [ ! -f "${ROOT_DIR}/assets/co.anysphere.dcursor.png" ]; then
+	bash "${ROOT_DIR}/scripts/export-dcursor-icons.sh" "${ROOT_DIR}/assets"
+	if [ ! -f "${ROOT_DIR}/assets/co.anysphere.dcursor.png" ] && [ -f "$svg" ]; then
 		if command -v rsvg-convert >/dev/null 2>&1; then
 			rsvg-convert -w 512 -h 512 "$svg" -o "${ROOT_DIR}/assets/co.anysphere.dcursor.png"
 		elif command -v convert >/dev/null 2>&1; then
 			convert -background none "$svg" -resize 512x512 "${ROOT_DIR}/assets/co.anysphere.dcursor.png"
-		fi
-	fi
-	if [ ! -f "${ROOT_DIR}/assets/co.anysphere.dcursor-splash.png" ]; then
-		if command -v rsvg-convert >/dev/null 2>&1; then
-			rsvg-convert -w 421 -h 480 "$svg" -o "${ROOT_DIR}/assets/co.anysphere.dcursor-splash.png"
-		elif command -v convert >/dev/null 2>&1; then
-			convert -background none "$svg" -resize 421x480 "${ROOT_DIR}/assets/co.anysphere.dcursor-splash.png"
 		fi
 	fi
 }
@@ -176,7 +175,17 @@ install_launcher_and_bins() {
 	install -m 755 "${ROOT_DIR}/scripts/dcursor-launcher.sh" "${STAGING_DIR}/usr/share/dcursor/bin/dcursor"
 	install -m 755 "${ROOT_DIR}/scripts/dcursor-gui.sh" "${STAGING_DIR}/usr/share/dcursor/bin/dcursor-gui"
 	install -m 755 "${ROOT_DIR}/scripts/dcursor-cursor-bridge.sh" "${STAGING_DIR}/usr/share/dcursor/bin/dcursor-cursor-bridge"
+	install -m 755 "${ROOT_DIR}/scripts/dcursor-url-handlers.sh" "${STAGING_DIR}/usr/share/dcursor/bin/dcursor-url-handlers"
 	install -m 755 "${ROOT_DIR}/scripts/dcursor-backup-user-data.sh" "${STAGING_DIR}/usr/share/dcursor/bin/dcursor-backup-user-data"
+	install -m 755 "${ROOT_DIR}/scripts/dcursor-import-cursor-conversations.sh" "${STAGING_DIR}/usr/share/dcursor/bin/dcursor-import-cursor-conversations.sh"
+	install -m 755 "${ROOT_DIR}/scripts/dcursor-import-cursor-conversations.py" "${STAGING_DIR}/usr/share/dcursor/bin/dcursor-import-cursor-conversations.py"
+	install -m 755 "${ROOT_DIR}/scripts/export-dcursor-icons.sh" "${STAGING_DIR}/usr/share/dcursor/bin/export-dcursor-icons.sh"
+
+	mkdir -p "${STAGING_DIR}/usr/share/dcursor/resources/app/extensions/dcursor-import"
+	install -m 644 "${ROOT_DIR}/extensions/dcursor-import/package.json" \
+		"${STAGING_DIR}/usr/share/dcursor/resources/app/extensions/dcursor-import/package.json"
+	install -m 644 "${ROOT_DIR}/extensions/dcursor-import/extension.js" \
+		"${STAGING_DIR}/usr/share/dcursor/resources/app/extensions/dcursor-import/extension.js"
 	install -m 644 "${ROOT_DIR}/scripts/dcursor-launch-env.sh" "${STAGING_DIR}/usr/share/dcursor/bin/dcursor-launch-env.sh"
 
 	rm -f "${STAGING_DIR}/usr/share/dcursor/bin/cursor"
@@ -217,6 +226,27 @@ install_system_files() {
 	fi
 
 	export_icon_png
+
+	install_hicolor_icons
+}
+
+install_hicolor_icons() {
+	echo "==> Installing Freedesktop hicolor app icons"
+	local svg="${ROOT_DIR}/assets/co.anysphere.dcursor.svg"
+	local sizes="16 22 24 32 48 64 128 256 512"
+	local size out_dir
+
+	[ -f "$svg" ] || return 0
+
+	for size in $sizes; do
+		out_dir="${STAGING_DIR}/usr/share/icons/hicolor/${size}x${size}/apps"
+		mkdir -p "$out_dir"
+		if command -v rsvg-convert >/dev/null 2>&1; then
+			rsvg-convert -w "$size" -h "$size" "$svg" -o "${out_dir}/co.anysphere.dcursor.png"
+		elif command -v convert >/dev/null 2>&1; then
+			convert -background none "$svg" -resize "${size}x${size}" "${out_dir}/co.anysphere.dcursor.png"
+		fi
+	done
 }
 
 write_control_file() {
@@ -289,6 +319,10 @@ main() {
 	install_launcher_and_bins
 	install_system_files
 	write_control_file
+	if [ -x "${ROOT_DIR}/scripts/audit-isolation.sh" ]; then
+		echo "==> Auditing isolation and branding"
+		bash "${ROOT_DIR}/scripts/audit-isolation.sh" "${STAGING_DIR}/usr/share/dcursor"
+	fi
 	build_deb
 }
 

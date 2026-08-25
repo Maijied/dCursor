@@ -1,9 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="dCursor by Lorapok Labs">
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="dCursor animated splash">
   <defs>
     <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#00F3FF"/>
-      <stop offset="45%" stop-color="#39FF14"/>
-      <stop offset="100%" stop-color="#BC13FE"/>
+      <stop offset="0%" stop-color="#00F3FF">
+        <animate attributeName="stop-color" values="#00F3FF;#39FF14;#BC13FE;#00F3FF" dur="6s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="50%" stop-color="#39FF14">
+        <animate attributeName="stop-color" values="#39FF14;#BC13FE;#00F3FF;#39FF14" dur="6s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" stop-color="#BC13FE">
+        <animate attributeName="stop-color" values="#BC13FE;#00F3FF;#39FF14;#BC13FE" dur="6s" repeatCount="indefinite"/>
+      </stop>
     </linearGradient>
     <linearGradient id="bg" x1="72" y1="48" x2="440" y2="464" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#101c38"/>
@@ -16,7 +22,9 @@
       <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
     </linearGradient>
     <radialGradient id="tileGlow" cx="36%" cy="28%" r="72%">
-      <stop offset="0%" stop-color="#00F3FF" stop-opacity="0.34"/>
+      <stop offset="0%" stop-color="#00F3FF" stop-opacity="0.34">
+        <animate attributeName="stop-opacity" values="0.22;0.42;0.22" dur="3s" repeatCount="indefinite"/>
+      </stop>
       <stop offset="48%" stop-color="#BC13FE" stop-opacity="0.12"/>
       <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
     </radialGradient>
@@ -58,7 +66,7 @@
       <feGaussianBlur stdDeviation="10" result="b"/>
       <feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1.2 0"/>
       <feMerge>
-        <feMergeNode/>
+        <feMergeNode in="b"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
@@ -74,33 +82,41 @@
     </filter>
   </defs>
 
+  <style>
+    @keyframes breathe {
+      0%, 100% { transform: scale(1) translateY(0); }
+      50% { transform: scale(1.045) translateY(-5px); }
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .larva { animation: breathe 3.2s ease-in-out infinite; transform-origin: 250px 260px; }
+    .ring { animation: spin 18s linear infinite; transform-origin: 256px 256px; }
+  </style>
+
   <rect x="32" y="32" width="448" height="448" rx="96" fill="url(#bg)"/>
   <rect x="32" y="32" width="448" height="448" rx="96" fill="url(#tileGlow)"/>
   <rect x="32" y="32" width="448" height="448" rx="96" fill="url(#floorGlow)"/>
   <rect x="32" y="32" width="448" height="448" rx="96" fill="url(#glass)"/>
   <rect x="32" y="32" width="448" height="448" rx="96" fill="none" stroke="url(#brand)" stroke-width="7" opacity="0.72"/>
 
-  <g opacity="0.34">
+  <g class="ring" opacity="0.34">
     <ellipse cx="256" cy="256" rx="196" ry="188" fill="none" stroke="url(#brand)" stroke-width="1.5" stroke-dasharray="12 20"/>
     <ellipse cx="256" cy="256" rx="168" ry="160" fill="none" stroke="#00F3FF" stroke-width="1" stroke-dasharray="6 16" transform="rotate(18 256 256)"/>
   </g>
-  <polygon points="256,98 366,158 366,296 256,356 146,296 146,158" fill="none" stroke="#00F3FF" stroke-width="1.5" opacity="0.22"/>
 
   <g filter="url(#shadow)">
   <g filter="url(#neon)">
-  <g id="larva">
-    <ellipse cx="360" cy="302" rx="48" ry="37" fill="#000000" opacity="0.35"/>
-    <ellipse cx="306" cy="286" rx="50" ry="39" fill="#000000" opacity="0.3"/>
-    <ellipse cx="252" cy="268" rx="52" ry="41" fill="#000000" opacity="0.28"/>
-    <ellipse cx="198" cy="248" rx="48" ry="37" fill="#000000" opacity="0.26"/>
-    <ellipse cx="144" cy="220" rx="58" ry="47" fill="#000000" opacity="0.24"/>
-
+  <g class="larva">
     <ellipse cx="360" cy="298" rx="46" ry="36" fill="url(#shell)"/>
     <ellipse cx="360" cy="298" rx="46" ry="36" fill="url(#shellHi)"/>
     <ellipse cx="360" cy="298" rx="32" ry="24" fill="url(#segGlow)" opacity="0.82"/>
     <ellipse cx="360" cy="298" rx="22" ry="16" fill="url(#core)" opacity="0.52"/>
     <ellipse cx="360" cy="286" rx="40" ry="5" fill="url(#ridge)" opacity="0.55"/>
-    <circle cx="382" cy="298" r="10" fill="#00F3FF" filter="url(#soft)"/>
+    <circle cx="382" cy="298" r="10" fill="#00F3FF" filter="url(#soft)">
+      <animate attributeName="r" values="8;11;8" dur="2s" repeatCount="indefinite"/>
+    </circle>
 
     <ellipse cx="306" cy="282" rx="48" ry="38" fill="url(#shell)"/>
     <ellipse cx="306" cy="282" rx="48" ry="38" fill="url(#shellHi)"/>
@@ -136,11 +152,19 @@
 
     <path d="M112 188 Q102 162 94 148" stroke="#4a5568" stroke-width="5" stroke-linecap="round" fill="none"/>
     <path d="M176 188 Q186 162 194 148" stroke="#4a5568" stroke-width="5" stroke-linecap="round" fill="none"/>
-    <circle cx="94" cy="148" r="7" fill="#00F3FF" filter="url(#soft)"/>
-    <circle cx="194" cy="148" r="7" fill="#39FF14" filter="url(#soft)"/>
+    <circle cx="94" cy="148" r="7" fill="#00F3FF" filter="url(#soft)">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="1.6s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="194" cy="148" r="7" fill="#39FF14" filter="url(#soft)">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="1.6s" begin="0.8s" repeatCount="indefinite"/>
+    </circle>
 
-    <circle cx="124" cy="206" r="19" fill="url(#eye)"/>
-    <circle cx="164" cy="206" r="19" fill="url(#eye)"/>
+    <circle cx="124" cy="206" r="19" fill="url(#eye)">
+      <animate attributeName="r" values="17;21;17" dur="2.4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="164" cy="206" r="19" fill="url(#eye)">
+      <animate attributeName="r" values="17;21;17" dur="2.4s" repeatCount="indefinite"/>
+    </circle>
     <circle cx="124" cy="206" r="8" fill="#061018"/>
     <circle cx="164" cy="206" r="8" fill="#061018"/>
     <circle cx="128" cy="202" r="3.5" fill="#FFFFFF"/>
@@ -150,6 +174,4 @@
   </g>
 
   <path d="M334 330 462 398l-34 5 18 32-19 11-18-31-22 25V330Z" fill="#FFFFFF" stroke="#07111a" stroke-width="7" stroke-linejoin="round"/>
-  <path d="M334 330 462 398l-34 5 18 32-19 11-18-31-22 25V330Z" fill="url(#core)" opacity="0.14"/>
-  <path d="M350 346 430 392" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.35"/>
 </svg>

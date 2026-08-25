@@ -7,8 +7,10 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-  release:
-    types: [published]
+
+concurrency:
+  group: dcursor-build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -23,17 +25,36 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3 dpkg-dev librsvg2-bin jq curl
+          sudo apt-get install -y \
+            python3 python3-pil \
+            dpkg-dev librsvg2-bin jq curl \
+            ffmpeg imagemagick ripgrep
+
+      - name: Cache Cursor .deb
+        uses: actions/cache@v4
+        with:
+          path: /tmp/cursor.deb
+          key: cursor-deb-${{ hashFiles('scripts/ci-fetch-cursor.sh') }}
+          restore-keys: |
+            cursor-deb-
 
       - name: Fetch Cursor .deb
         run: chmod +x scripts/ci-fetch-cursor.sh && ./scripts/ci-fetch-cursor.sh
 
       - name: Build dCursor package
-        run: chmod +x build.sh && ./build.sh
+        env:
+          DCURSOR_BUILD_DIR: /tmp/dcursor-build
+          DCURSOR_STRICT_BUILD: "1"
+        run: chmod +x build.sh scripts/audit-isolation.sh && ./build.sh
+
+      - name: Validate package metadata
+        run: |
+          ls -lh dist/
+          dpkg-deb -I dist/dCursor_*.deb
+          dpkg-deb -c dist/dCursor_*.deb | grep -q 'usr/share/dcursor/dcursor'
 
       - name: Prepare release filename
         run: |
-          ls -lh dist/
           if [ ! -e dist/dCursor.deb ]; then
             DEB="$(ls dist/dCursor_*.deb | head -1)"
             ln -sf "$(basename "$DEB")" dist/dCursor.deb

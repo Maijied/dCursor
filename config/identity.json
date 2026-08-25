@@ -20,7 +20,7 @@
   "cliCommand": "dcursor",
   "agentDataDir": "dcursor-agent",
   "agentBinary": "dcursor-agent",
-  "versionSuffix": "dcursor10",
+  "versionSuffix": "dcursor14",
   "loginTitle": "dCursor",
   "loginSubtitle": "Lorapok Labs — duplicate Cursor instance",
   "description": "The AI Code Editor (dCursor mirror instance)."

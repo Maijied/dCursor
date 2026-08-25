@@ -39,6 +39,29 @@ Built by **[Lorapok Labs](https://github.com/Maijied)** as a developer productiv
 
 Both apps can run **at the same time** with **different accounts**.
 
+### Isolation from main Cursor
+
+dCursor never writes to `~/.cursor` or `~/.config/Cursor`. The conversation import tool is read-only on Cursor paths.
+
+| Concern | Behavior |
+|---------|----------|
+| **Agent data** | Isolated at `~/.local/share/dcursor-agent` (no hardlinks by default) |
+| **`cursor://` handler** | Off by default; use `dcursor-url-handlers restore-cursor` if profile/auth breaks |
+| **Seed agent from Cursor** | Opt-in only: `DCURSOR_SEED_AGENT_FROM_CURSOR=1 dcursor agent` |
+
+Restore main Cursor as `cursor://` handler (recommended if profile/auth breaks):
+
+```bash
+dcursor-url-handlers restore-cursor
+# or: xdg-mime default cursor-url-handler.desktop x-scheme-handler/cursor
+```
+
+Enable bridge only when dCursor GitHub OAuth needs it:
+
+```bash
+dcursor-url-handlers enable-bridge
+```
+
 ---
 
 ## Download
@@ -74,6 +97,22 @@ dcursor              # Launch IDE (sign in with a separate account)
 dcursor agent        # Launch isolated CLI agent
 dcursor --version    # Check version
 ```
+
+### Import conversations from Cursor
+
+Copy chat history from main Cursor into dCursor. **Main Cursor is read-only** — dCursor never modifies `~/.cursor` or `~/.config/Cursor`.
+
+**In the app:** Help → **Import Conversations from Cursor** (also in the status bar and Command Palette).
+
+```bash
+# Preview what would be imported
+dcursor import-conversations --dry-run
+
+# Close both Cursor and dCursor, then import
+dcursor import-conversations
+```
+
+Aliases: `dcursor import-from-cursor`. A backup is saved under `~/.dcursor/backups/` before any changes.
 
 Launch from your app menu: **dCursor** (Lorapok Larvae × Cursor hybrid icon).
 
@@ -143,6 +182,13 @@ flowchart TB
 - Cursor installed via `.deb`, **or** CI fetch script (no local Cursor needed)
 - `python3`, `dpkg-deb`
 - `rsvg-convert`, `inkscape`, or ImageMagick (icon export)
+- `python3-pil` + `ffmpeg` or GStreamer (animated splash WEBM; required in strict/CI builds)
+
+Install all build dependencies:
+
+```bash
+make deps
+```
 
 ### Build
 
@@ -152,14 +198,29 @@ flowchart TB
 make build
 ```
 
+Strict build (fails if splash WEBM generation fails):
+
+```bash
+DCURSOR_STRICT_BUILD=1 ./build.sh
+# or
+make build-ci
+```
+
+Post-build audit (isolation + branding checks):
+
+```bash
+make audit DCURSOR_APP_ROOT=/tmp/dcursor-build/staging/usr/share/dcursor
+```
+
 ### CI/CD (no local Cursor needed)
 
 ```bash
+make deps
 ./scripts/ci-fetch-cursor.sh   # downloads latest Cursor .deb
-./build.sh
+DCURSOR_STRICT_BUILD=1 ./build.sh
 ```
 
-GitHub Actions builds automatically on every push to `main` and publishes artifacts to [Releases](https://github.com/Maijied/dCursor/releases).
+GitHub Actions builds on every push/PR to `main` with full asset generation (Pillow + ffmpeg), runs `scripts/audit-isolation.sh`, and publishes artifacts to [Releases](https://github.com/Maijied/dCursor/releases).
 
 ### Build notes
 
@@ -213,7 +274,7 @@ dCursor/
 
 ## Lorapok Labs
 
-**dCursor** is a **[Lorapok Labs](https://github.com/Maijied)** open-source utility. The icon blends the Lorapok Larvae identity (green/cyan segmented instar motif) with Cursor's app-tile aesthetic — a visual marker that this is your *second* Cursor instance.
+**dCursor** is a **[Lorapok Labs](https://github.com/Maijied)** open-source utility. The icon uses the Lorapok **Instar** larva identity — segmented cybernetic body, cyan (`#00F3FF`) / purple (`#BC13FE`) / neon green (`#39FF14`) palette — in a Cursor-style app tile. It marks this as your *second* Cursor instance.
 
 - **Maintainer:** Maizied Hasan Majumder — Lorapok Labs
 - **Repository:** [github.com/Maijied/dCursor](https://github.com/Maijied/dCursor)

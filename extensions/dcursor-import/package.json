@@ -1,0 +1,43 @@
+{
+  "name": "dcursor-import",
+  "displayName": "dCursor Import",
+  "description": "Import conversations from main Cursor (read-only).",
+  "publisher": "lorapok",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "vscode": "^1.43.0"
+  },
+  "extensionKind": ["ui"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "dcursor.importFromCursor",
+        "title": "Import Conversations from Cursor",
+        "category": "dCursor",
+        "icon": "$(cloud-download)"
+      }
+    ],
+    "menus": {
+      "menubar/help": [
+        {
+          "command": "dcursor.importFromCursor",
+          "group": "9_dcursor@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "dcursor.importFromCursor"
+        }
+      ],
+      "commandCenter": [
+        {
+          "command": "dcursor.importFromCursor",
+          "group": "dCursor@1"
+        }
+      ]
+    }
+  }
+}
